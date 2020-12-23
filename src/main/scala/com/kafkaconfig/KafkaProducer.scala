@@ -33,9 +33,12 @@ object KafkaProducer {
       val producer = new KafkaProducer[String, String](props)
       producer
     } catch {
-      case ex: org.apache.kafka.common.KafkaException =>
-        logger.error(ex.printStackTrace())
+      case kafkaException: org.apache.kafka.common.KafkaException =>
+        logger.error(kafkaException.printStackTrace())
         throw new Exception("Unable to create kafka producer")
+      case nullPointerException: NullPointerException =>
+        logger.error(nullPointerException.printStackTrace())
+        throw new Exception("Broker data is null")
     }
   }
 
