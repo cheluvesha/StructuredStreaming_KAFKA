@@ -46,7 +46,7 @@ class StockPricePredictionTest extends FunSuite {
     )
   )
   val pathToSave = "output"
-  val stockPricePrediction = new StockPricePrediction(spark, pathToSave, pyFile)
+  val stockPricePrediction = new StockPricePrediction(spark)
   var castRenamedDF: DataFrame = _
   val wrongSchema = List(StructField("Open", DoubleType, nullable = true))
 
@@ -97,7 +97,11 @@ class StockPricePredictionTest extends FunSuite {
     assert(thrown.getMessage === "Unable to process DataFrame")
   }
   test("givenDataFrameToApplyLinearRegressionModelAndItMustCreateOutputFile") {
-    stockPricePrediction.writeDataToSourceByPredictingPrice(castRenamedDF)
+    stockPricePrediction.writeDataToSourceByPredictingPrice(
+      castRenamedDF,
+      pathToSave,
+      pyFile
+    )
     val file = File(pathToSave)
     assert(file.exists)
   }
