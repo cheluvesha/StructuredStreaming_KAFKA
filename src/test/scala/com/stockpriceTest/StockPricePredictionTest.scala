@@ -45,7 +45,7 @@ class StockPricePredictionTest extends FunSuite {
       StructField("Date", TimestampType, nullable = true)
     )
   )
-  val pathToSave = "output"
+  val pathToSave = "OutputTest"
   val stockPricePrediction = new StockPricePrediction(spark)
   var castRenamedDF: DataFrame = _
   val wrongSchema = List(StructField("Open", DoubleType, nullable = true))
