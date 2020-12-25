@@ -17,7 +17,7 @@ object UtilityClass {
     val sparkConfigurations = new SparkConf()
       .setAppName(appName)
       .setMaster("local[*]")
-      .set("spark.streaming.kafka.maxRatePerPartition", "1")
+      .set("spark.streaming.kafka.maxRatePerPartition", "10")
       .set("spark.streaming.stopGracefullyOnShutdown", "true")
 
     val sparkSession = SparkSession
