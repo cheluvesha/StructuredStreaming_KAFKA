@@ -25,5 +25,3 @@ libraryDependencies += "org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.1"
 libraryDependencies += "io.spray" %% "spray-json" % "1.3.5"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test
-
-libraryDependencies += "com.github.seratch" %% "awscala-s3" % "0.8.+"
