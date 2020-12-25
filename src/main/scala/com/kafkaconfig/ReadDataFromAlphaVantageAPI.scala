@@ -1,9 +1,9 @@
 package com.kafkaconfig
 
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.log4j.Logger
 import spray.json._
+
+import scala.io.Source
 
 /***
   * Class connects to Alpha Vantage Api to fetch http response
@@ -20,22 +20,11 @@ object ReadDataFromAlphaVantageAPI {
   def getApiContent(url: String): String = {
     try {
       logger.info("fetching data from API")
-      val httpClient = HttpClientBuilder.create().build()
-      val httpResponse = httpClient.execute(new HttpGet(url))
-      logger.info("Result: " + httpResponse.getStatusLine.getStatusCode)
-      val entity = httpResponse.getEntity
-      var content: String = ""
-      if (entity != null) {
-        val inputStream = entity.getContent
-        content = scala.io.Source.fromInputStream(inputStream).getLines.mkString
-        inputStream.close()
-      }
-      httpClient.close()
-      content
+      val content = Source.fromURL(url)
+      val contentInString = content.mkString
+      content.close()
+      contentInString
     } catch {
-      case httpException: org.apache.http.conn.HttpHostConnectException =>
-        logger.error(httpException.printStackTrace())
-        throw new Exception("HTTP Connection Error")
       case ex: Exception =>
         logger.error(ex.printStackTrace())
         throw new Exception("Error While Retrieving The Data")
