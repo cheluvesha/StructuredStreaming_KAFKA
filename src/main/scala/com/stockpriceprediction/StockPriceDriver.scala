@@ -26,10 +26,9 @@ object StockPriceDriver {
   val broker: String = System.getenv("BROKER_SS")
   val groupId: String = System.getenv("GROUP_ID_SS")
   val logger: Logger = Logger.getLogger(getClass.getName)
-  val pathToSave = "x"
+  val pathToSave = "Output"
   val pyFile: String = System.getenv("PY_FILE")
-  val stockPricePrediction =
-    new StockPricePrediction(sparkSession, pathToSave, pyFile)
+  val stockPricePrediction = new StockPricePrediction(sparkSession)
   val schema = List(
     StructField("1. open", StringType),
     StructField("2. high", StringType),
@@ -37,6 +36,9 @@ object StockPriceDriver {
     StructField("4. close", StringType),
     StructField("5. volume", StringType)
   )
+  val awsAccessKeyID: String = System.getenv("AWS_ACCESS_KEY_ID")
+  val awsSecretAccessKey: String = System.getenv("AWS_SECRET_ACCESS_KEY")
+  val s3BucketURL = "s3a://stock-price-predicted"
 
   /***
     * Calls the Required methods in order to get Stock Data and to parse the data to json as well
@@ -121,6 +123,10 @@ object StockPriceDriver {
     }
     val processedDF = processTheConsumedDataFromKafka(broker, topic, schema)
     processedDF.printSchema()
-    stockPricePrediction.writeDataToSourceByPredictingPrice(processedDF)
+    stockPricePrediction.writeDataToSourceByPredictingPrice(
+      processedDF,
+      pathToSave,
+      pyFile
+    )
   }
 }
