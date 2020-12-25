@@ -3,7 +3,13 @@ package com.stockpriceTest
 import com.Utility.UtilityClass
 import com.stockpriceprediction.StockPriceDriver
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{StringType, StructField}
+import org.apache.spark.sql.types.{
+  DoubleType,
+  StringType,
+  StructField,
+  StructType,
+  TimestampType
+}
 import org.scalatest.FunSuite
 import spray.json.JsValue
 
@@ -29,6 +35,17 @@ class StockPricePredictionTest extends FunSuite {
   var jsonData: Map[String, JsValue] = _
   val wrongBroker: String = null
   val wrongTopic: String = null
+  val dataFrameSchema: StructType = StructType(
+    List(
+      StructField("Open", DoubleType, nullable = true),
+      StructField("High", DoubleType, nullable = true),
+      StructField("Low", DoubleType, nullable = true),
+      StructField("Close", DoubleType, nullable = true),
+      StructField("Volume", DoubleType, nullable = true),
+      StructField("Date", TimestampType, nullable = true)
+    )
+  )
+  val wrongSchema = List(StructField("Open", DoubleType, nullable = true))
 
   test("givenURLItMustReadTheResponseAndParseTheData") {
     jsonData = StockPriceDriver.fetchDataFromAlphaVantageAPI(url)
@@ -51,5 +68,29 @@ class StockPricePredictionTest extends FunSuite {
     }
     assert(thrown.getMessage === "Broker data is null")
   }
-
+  test("givenKafkaDetailsItMustReadTheDataAndItMustProcessTheData") {
+    val castRenamedDF =
+      StockPriceDriver.processTheConsumedDataFromKafka(broker, topic, schema)
+    assert(castRenamedDF.schema === dataFrameSchema)
+  }
+  test("givenWrongKafkaDetailsItMustReadTheDataAndItMustThrowAnException") {
+    val thrown = intercept[Exception] {
+      StockPriceDriver.processTheConsumedDataFromKafka(
+        wrongBroker,
+        wrongTopic,
+        schema
+      )
+    }
+    assert(thrown.getMessage === "null fields passed")
+  }
+  test("givenWrongSchemaDetailsItMustReadTheDataAndItMustThrowAnException") {
+    val thrown = intercept[Exception] {
+      StockPriceDriver.processTheConsumedDataFromKafka(
+        broker,
+        topic,
+        wrongSchema
+      )
+    }
+    assert(thrown.getMessage === "Unable to process DataFrame")
+  }
 }
