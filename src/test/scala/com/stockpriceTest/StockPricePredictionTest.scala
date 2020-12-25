@@ -1,8 +1,8 @@
 package com.stockpriceTest
 
 import com.Utility.UtilityClass
-import com.stockpriceprediction.StockPriceDriver
-import org.apache.spark.sql.SparkSession
+import com.stockpriceprediction.{StockPriceDriver, StockPricePrediction}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.{
   DoubleType,
   StringType,
@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.{
 }
 import org.scalatest.FunSuite
 import spray.json.JsValue
+import scala.reflect.io.File
 
 class StockPricePredictionTest extends FunSuite {
   val spark: SparkSession = UtilityClass.createSparkSessionObj("Test")
@@ -21,8 +22,7 @@ class StockPricePredictionTest extends FunSuite {
   val url: String =
     "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&interval=1min&symbol=" +
       companyName + "&apikey=" + apiKey
-  val broker: String = System.getenv("BROKER")
-  val groupId = "testGrp1"
+  val broker: String = "localhost:9092"
   val pyFile: String = System.getenv("PY_FILE")
   val schema = List(
     StructField("1. open", StringType),
@@ -45,6 +45,9 @@ class StockPricePredictionTest extends FunSuite {
       StructField("Date", TimestampType, nullable = true)
     )
   )
+  val pathToSave = "output"
+  val stockPricePrediction = new StockPricePrediction(spark, pathToSave, pyFile)
+  var castRenamedDF: DataFrame = _
   val wrongSchema = List(StructField("Open", DoubleType, nullable = true))
 
   test("givenURLItMustReadTheResponseAndParseTheData") {
@@ -64,12 +67,12 @@ class StockPricePredictionTest extends FunSuite {
   }
   test("givenNullFieldsItMustThrowAnException") {
     val thrown = intercept[Exception] {
-      StockPriceDriver.sendDataToKafkaTopic(jsonData, broker, topic)
+      StockPriceDriver.sendDataToKafkaTopic(jsonData, wrongBroker, wrongTopic)
     }
     assert(thrown.getMessage === "Broker data is null")
   }
   test("givenKafkaDetailsItMustReadTheDataAndItMustProcessTheData") {
-    val castRenamedDF =
+    castRenamedDF =
       StockPriceDriver.processTheConsumedDataFromKafka(broker, topic, schema)
     assert(castRenamedDF.schema === dataFrameSchema)
   }
@@ -92,5 +95,10 @@ class StockPricePredictionTest extends FunSuite {
       )
     }
     assert(thrown.getMessage === "Unable to process DataFrame")
+  }
+  test("givenDataFrameToApplyLinearRegressionModelAndItMustCreateOutputFile") {
+    stockPricePrediction.writeDataToSourceByPredictingPrice(castRenamedDF)
+    val file = File(pathToSave)
+    assert(file.exists)
   }
 }
