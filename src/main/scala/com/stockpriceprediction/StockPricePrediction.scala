@@ -12,11 +12,7 @@ import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
   * Performs Stock price prediction using python model
   * @param sparkSession SparkSession
   */
-class StockPricePrediction(
-    sparkSession: SparkSession,
-    pathToSave: String,
-    pyFile: String
-) {
+class StockPricePrediction(sparkSession: SparkSession) {
   val logger: Logger = Logger.getLogger(getClass.getName)
 
   /***
@@ -105,7 +101,7 @@ class StockPricePrediction(
   }
 
   /***
-    * Passes DataFrame to loadLinearRegression method and writes predicted price DataFrame to S3
+    * Passes DataFrame to loadLinearRegression method and writes predicted price DataFrame to file
     * @param predictDF DataFrame
     * @param pathToSave String
     * @param pyFile String
@@ -122,7 +118,7 @@ class StockPricePrediction(
         predictedPriceDF.write
           .option("header", value = true)
           .mode(SaveMode.Overwrite)
-          .csv("output")
+          .csv(pathToSave)
       }
     } catch {
       case exception: Exception =>
@@ -135,12 +131,20 @@ class StockPricePrediction(
     * Micro batch processing
     * @param processedDF DataFrame
     */
-  def writeDataToSourceByPredictingPrice(processedDF: DataFrame): Unit = {
+  def writeDataToSourceByPredictingPrice(
+      processedDF: DataFrame,
+      pathToSave: String,
+      pyFile: String
+  ): Unit = {
     logger.info("Micro batch is started")
     val query = processedDF.writeStream
       .foreachBatch { (predictDF: DataFrame, batchId: Long) =>
         logger.info("Running for the batch: " + batchId)
-        predictPrice(predictDF, pathToSave, pyFile)
+        predictPrice(
+          predictDF,
+          pathToSave,
+          pyFile
+        )
       }
       .queryName("Stock Prediction Query")
       .option("checkpointLocation", "chk-point-dir")
