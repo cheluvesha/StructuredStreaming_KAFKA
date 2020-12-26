@@ -36,9 +36,6 @@ object StockPriceDriver {
     StructField("4. close", StringType),
     StructField("5. volume", StringType)
   )
-  val awsAccessKeyID: String = System.getenv("AWS_ACCESS_KEY_ID")
-  val awsSecretAccessKey: String = System.getenv("AWS_SECRET_ACCESS_KEY")
-  val s3BucketURL = "s3a://stock-price-predicted"
 
   /***
     * Calls the Required methods in order to get Stock Data and to parse the data to json as well
